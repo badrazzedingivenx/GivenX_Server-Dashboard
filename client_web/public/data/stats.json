@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-03-05T18:00:00Z",
+  "uptime_seconds": 93784,
+  "cpu": {
+    "usage_percent": 34,
+    "history_percent": [18, 22, 28, 25, 31, 35, 34, 36, 33, 34]
+  },
+  "ram": {
+    "total_mb": 8192,
+    "used_mb": 4760,
+    "usage_percent": 58,
+    "history_percent": [41, 43, 45, 48, 49, 52, 54, 56, 57, 58]
+  },
+  "disk": {
+    "total_gb": 1000,
+    "used_gb": 710,
+    "usage_percent": 71
+  },
+  "processes_top_cpu": [
+    { "pid": 1234, "user": "root", "command": "node server.js", "cpu": 22.1, "mem": 3.4 },
+    { "pid": 2233, "user": "dev", "command": "chrome", "cpu": 11.8, "mem": 8.2 },
+    { "pid": 998, "user": "root", "command": "php -S 0.0.0.0:8081", "cpu": 5.5, "mem": 1.1 },
+    { "pid": 3321, "user": "dev", "command": "npm start", "cpu": 4.3, "mem": 2.6 },
+    { "pid": 777, "user": "root", "command": "dockerd", "cpu": 3.2, "mem": 1.9 }
+  ]
+}
