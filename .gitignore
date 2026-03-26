@@ -1,0 +1,7 @@
+node_modules/
+vendor/
+.env
+*.log
+storage/logs/*
+dist/
+build/
