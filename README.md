@@ -47,7 +47,7 @@ Le projet est basé sur une architecture **3-tiers** :
 
 ---
 
-## ⚙️rérequis
+## rérequis
 
 Avant installation, vous devez avoir :
 
@@ -110,7 +110,7 @@ npm install
 npm start
 ```
 
-👉 Accès :
+ Accès :
 http://localhost:3000
 
 ---
@@ -188,15 +188,15 @@ Le dashboard affiche :
 
 ##  Fonctionnalités principales
 
-✔ Authentification sécurisée
-✔ Dashboard dynamique
-✔ Gestion des serveurs
-✔ Gestion des projets
-✔ Gestion des alertes
-✔ Gestion des utilisateurs (admin)
-✔ Logs système et utilisateur
-✔ Notifications email
-✔ API REST complète
+ Authentification sécurisée
+ Dashboard dynamique
+ Gestion des serveurs
+ Gestion des projets
+ Gestion des alertes
+ Gestion des utilisateurs (admin)
+ Logs système et utilisateur
+ Notifications email
+ API REST complète
 
 ---
 
