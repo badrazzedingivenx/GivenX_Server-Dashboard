@@ -1,5 +1,4 @@
-package com.example.sysmonitor
-
+package com.example.sysmonitor.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -27,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
+import com.example.sysmonitor.ui.screens.AuthTextField
+import com.example.sysmonitor.ui.screens.GradientButton
 
 @Composable
 fun RegisterScreen(

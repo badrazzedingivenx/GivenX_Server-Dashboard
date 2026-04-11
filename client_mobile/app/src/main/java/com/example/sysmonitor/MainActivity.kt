@@ -14,6 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import com.example.sysmonitor.ui.navigation.SysMonitorNavGraph
 
 // ─────────────────────────────────────────
 // THEME
