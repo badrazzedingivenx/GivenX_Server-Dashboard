@@ -1,67 +1,101 @@
 package com.example.sysmonitor.ui.screens
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.*
-import com.example.sysmonitor.ui.screens.AuthTextField
-import com.example.sysmonitor.ui.screens.GradientButton
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sysmonitor.ui.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    viewModel: AuthViewModel = viewModel()
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    var email           by remember { mutableStateOf("") }
+    var password        by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-    var globalError by remember { mutableStateOf<String?>(null) }
+    var emailError      by remember { mutableStateOf<String?>(null) }
+    var passwordError   by remember { mutableStateOf<String?>(null) }
 
     val focusManager = LocalFocusManager.current
 
     val contentAlpha by animateFloatAsState(
         targetValue = 1f,
-        animationSpec = tween(durationMillis = 700, easing = EaseOutCubic),
-        label = "contentAlpha"
+        animationSpec = tween(700, easing = EaseOutCubic),
+        label = "alpha"
     )
-    val contentOffset by animateFloatAsState(
-        targetValue = 0f,
-        animationSpec = tween(durationMillis = 700, easing = EaseOutCubic),
-        label = "contentOffset"
-    )
+
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            viewModel.resetState()
+            onLoginSuccess()
+        }
+    }
 
     fun validate(): Boolean {
         var valid = true
         emailError = null
         passwordError = null
-        globalError = null
-
         if (email.isBlank()) {
             emailError = "L'adresse e-mail est obligatoire"
             valid = false
@@ -69,34 +103,20 @@ fun LoginScreen(
             emailError = "Adresse e-mail invalide"
             valid = false
         }
-
         if (password.isBlank()) {
             passwordError = "Le mot de passe est obligatoire"
             valid = false
         } else if (password.length < 6) {
-            passwordError = "Le mot de passe doit contenir au moins 6 caractères"
+            passwordError = "Minimum 6 caractères"
             valid = false
         }
-
         return valid
     }
 
     fun handleLogin() {
         focusManager.clearFocus()
         if (!validate()) return
-
-        isLoading = true
-        globalError = null
-
-        // Simulate network call
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            isLoading = false
-            if (email == "admin@sysmonitor.com" && password == "password123") {
-                onLoginSuccess()
-            } else {
-                globalError = "Identifiants incorrects. Veuillez réessayer."
-            }
-        }, 1800)
+        viewModel.login(email, password)
     }
 
     Box(
@@ -104,15 +124,10 @@ fun LoginScreen(
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF0A0E1A),
-                        Color(0xFF0D1B2A),
-                        Color(0xFF0A1628)
-                    )
+                    colors = listOf(Color(0xFF0A0E1A), Color(0xFF0D1B2A), Color(0xFF0A1628))
                 )
             )
     ) {
-        // Decorative ambient orbs
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
                 brush = Brush.radialGradient(
@@ -132,15 +147,6 @@ fun LoginScreen(
                 center = Offset(size.width * 0.85f, size.height * 0.75f),
                 radius = size.width * 0.50f
             )
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0x1500D4AA), Color.Transparent),
-                    center = Offset(size.width * 0.5f, size.height * 0.9f),
-                    radius = size.width * 0.35f
-                ),
-                center = Offset(size.width * 0.5f, size.height * 0.9f),
-                radius = size.width * 0.35f
-            )
         }
 
         Column(
@@ -148,25 +154,23 @@ fun LoginScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .graphicsLayer {
-                    alpha = contentAlpha
-                    translationY = contentOffset
-                },
+                .graphicsLayer { alpha = contentAlpha },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Spacer(modifier = Modifier.height(60.dp))
 
-            // Logo / Brand mark
+            // Logo
             Box(
                 modifier = Modifier
-                    .size(72.dp)
+                    .height(72.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(Color(0xFF00C2FF), Color(0xFF6E40FF))
                         )
-                    ),
+                    )
+                    .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -198,36 +202,27 @@ fun LoginScreen(
                 text = "Tableau de bord de surveillance système",
                 style = TextStyle(
                     fontSize = 13.sp,
-                    color = Color(0xFF7A8BA0),
-                    letterSpacing = 0.2.sp
+                    color = Color(0xFF7A8BA0)
                 ),
                 textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Glass Card
+            // Card
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color(0x1AFFFFFF),
-                                Color(0x0DFFFFFF)
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                            colors = listOf(Color(0x1AFFFFFF), Color(0x0DFFFFFF))
                         )
                     )
                     .border(
                         width = 1.dp,
                         brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color(0x33FFFFFF),
-                                Color(0x0DFFFFFF)
-                            )
+                            colors = listOf(Color(0x33FFFFFF), Color(0x0DFFFFFF))
                         ),
                         shape = RoundedCornerShape(24.dp)
                     )
@@ -253,14 +248,9 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Email Field
                     AuthTextField(
                         value = email,
-                        onValueChange = {
-                            email = it
-                            emailError = null
-                            globalError = null
-                        },
+                        onValueChange = { email = it; emailError = null },
                         label = "Adresse e-mail",
                         placeholder = "vous@exemple.com",
                         leadingIcon = Icons.Default.Email,
@@ -277,14 +267,9 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Password Field
                     AuthTextField(
                         value = password,
-                        onValueChange = {
-                            password = it
-                            passwordError = null
-                            globalError = null
-                        },
+                        onValueChange = { password = it; passwordError = null },
                         label = "Mot de passe",
                         placeholder = "••••••••",
                         leadingIcon = Icons.Default.Lock,
@@ -294,9 +279,7 @@ fun LoginScreen(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
-                        keyboardActions = KeyboardActions(
-                            onDone = { handleLogin() }
-                        ),
+                        keyboardActions = KeyboardActions(onDone = { handleLogin() }),
                         isError = passwordError != null,
                         errorMessage = passwordError,
                         trailingIcon = {
@@ -304,36 +287,30 @@ fun LoginScreen(
                                 Icon(
                                     imageVector = if (passwordVisible)
                                         Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (passwordVisible)
-                                        "Masquer" else "Afficher",
+                                    contentDescription = null,
                                     tint = Color(0xFF7A8BA0)
                                 )
                             }
                         }
                     )
 
-                    // Global error
                     AnimatedVisibility(
-                        visible = globalError != null,
+                        visible = uiState.errorMessage != null,
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically()
                     ) {
-                        globalError?.let {
+                        uiState.errorMessage?.let { err ->
                             Spacer(modifier = Modifier.height(16.dp))
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color(0x1AFF4D6D))
-                                    .border(
-                                        1.dp,
-                                        Color(0x33FF4D6D),
-                                        RoundedCornerShape(12.dp)
-                                    )
+                                    .border(1.dp, Color(0x33FF4D6D), RoundedCornerShape(12.dp))
                                     .padding(12.dp)
                             ) {
                                 Text(
-                                    text = it,
+                                    text = err,
                                     style = TextStyle(
                                         fontSize = 13.sp,
                                         color = Color(0xFFFF7A93)
@@ -345,10 +322,9 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Login Button
                     GradientButton(
                         text = "Se connecter",
-                        isLoading = isLoading,
+                        isLoading = uiState.isLoading,
                         onClick = { handleLogin() }
                     )
                 }
@@ -356,28 +332,23 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Divider
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Divider(
-                    modifier = Modifier.weight(1f),
-                    color = Color(0xFF1E2D40)
-                )
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF1E2D40))
                 Text(
                     text = "  ou  ",
-                    style = TextStyle(fontSize = 12.sp, color = Color(0xFF4A5C6A))
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        color = Color(0xFF4A5C6A)
+                    )
                 )
-                Divider(
-                    modifier = Modifier.weight(1f),
-                    color = Color(0xFF1E2D40)
-                )
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF1E2D40))
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Register link
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically

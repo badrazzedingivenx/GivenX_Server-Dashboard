@@ -28,6 +28,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sysmonitor.data.model.ServerModel
 import com.example.sysmonitor.data.model.ServerStatus
 import com.example.sysmonitor.ui.viewmodel.ServerViewModel
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

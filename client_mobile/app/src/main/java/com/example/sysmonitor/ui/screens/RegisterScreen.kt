@@ -1,116 +1,132 @@
 package com.example.sysmonitor.ui.screens
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.*
-import com.example.sysmonitor.ui.screens.AuthTextField
-import com.example.sysmonitor.ui.screens.GradientButton
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sysmonitor.ui.viewmodel.AuthViewModel
 
 @Composable
 fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    viewModel: AuthViewModel = viewModel()
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    var nameError by remember { mutableStateOf<String?>(null) }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
-    var successMessage by remember { mutableStateOf<String?>(null) }
+    var fullName               by remember { mutableStateOf("") }
+    var email                  by remember { mutableStateOf("") }
+    var password               by remember { mutableStateOf("") }
+    var confirmPassword        by remember { mutableStateOf("") }
+    var passwordVisible        by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var nameError              by remember { mutableStateOf<String?>(null) }
+    var emailError             by remember { mutableStateOf<String?>(null) }
+    var passwordError          by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError   by remember { mutableStateOf<String?>(null) }
 
     val focusManager = LocalFocusManager.current
 
     val contentAlpha by animateFloatAsState(
         targetValue = 1f,
-        animationSpec = tween(durationMillis = 700, easing = EaseOutCubic),
+        animationSpec = tween(700, easing = EaseOutCubic),
         label = "alpha"
     )
 
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            viewModel.resetState()
+            onRegisterSuccess()
+        }
+    }
+
     fun validate(): Boolean {
         var valid = true
-        nameError = null
-        emailError = null
-        passwordError = null
-        confirmPasswordError = null
+        nameError = null; emailError = null
+        passwordError = null; confirmPasswordError = null
 
         if (fullName.isBlank()) {
-            nameError = "Le nom complet est obligatoire"
-            valid = false
-        } else if (fullName.trim().length < 2) {
-            nameError = "Le nom doit contenir au moins 2 caractères"
-            valid = false
+            nameError = "Le nom complet est obligatoire"; valid = false
         }
-
         if (email.isBlank()) {
-            emailError = "L'adresse e-mail est obligatoire"
-            valid = false
+            emailError = "L'adresse e-mail est obligatoire"; valid = false
         } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailError = "Adresse e-mail invalide"
-            valid = false
+            emailError = "Adresse e-mail invalide"; valid = false
         }
-
         if (password.isBlank()) {
-            passwordError = "Le mot de passe est obligatoire"
-            valid = false
+            passwordError = "Le mot de passe est obligatoire"; valid = false
         } else if (password.length < 6) {
-            passwordError = "Le mot de passe doit contenir au moins 6 caractères"
-            valid = false
+            passwordError = "Minimum 6 caractères"; valid = false
         }
-
-        if (confirmPassword.isBlank()) {
-            confirmPasswordError = "Veuillez confirmer le mot de passe"
-            valid = false
-        } else if (confirmPassword != password) {
-            confirmPasswordError = "Les mots de passe ne correspondent pas"
-            valid = false
+        if (confirmPassword != password) {
+            confirmPasswordError = "Les mots de passe ne correspondent pas"; valid = false
         }
-
         return valid
     }
 
     fun handleRegister() {
         focusManager.clearFocus()
         if (!validate()) return
-
-        isLoading = true
-
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            isLoading = false
-            successMessage = "Compte créé avec succès !"
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                onRegisterSuccess()
-            }, 1200)
-        }, 1800)
+        viewModel.register(email, password, fullName)
     }
 
     Box(
@@ -118,15 +134,10 @@ fun RegisterScreen(
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF0A0E1A),
-                        Color(0xFF0D1B2A),
-                        Color(0xFF0A1628)
-                    )
+                    colors = listOf(Color(0xFF0A0E1A), Color(0xFF0D1B2A), Color(0xFF0A1628))
                 )
             )
     ) {
-        // Ambient orbs
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
                 brush = Brush.radialGradient(
@@ -146,15 +157,6 @@ fun RegisterScreen(
                 center = Offset(size.width * 0.1f, size.height * 0.65f),
                 radius = size.width * 0.40f
             )
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0x1500C2FF), Color.Transparent),
-                    center = Offset(size.width * 0.5f, size.height * 0.95f),
-                    radius = size.width * 0.35f
-                ),
-                center = Offset(size.width * 0.5f, size.height * 0.95f),
-                radius = size.width * 0.35f
-            )
         }
 
         Column(
@@ -162,9 +164,7 @@ fun RegisterScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .graphicsLayer {
-                    alpha = contentAlpha
-                },
+                .graphicsLayer { alpha = contentAlpha },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -173,13 +173,14 @@ fun RegisterScreen(
             // Logo
             Box(
                 modifier = Modifier
-                    .size(72.dp)
+                    .height(72.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(Color(0xFF00D4AA), Color(0xFF00C2FF))
                         )
-                    ),
+                    )
+                    .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -211,36 +212,27 @@ fun RegisterScreen(
                 text = "Créez votre compte administrateur",
                 style = TextStyle(
                     fontSize = 13.sp,
-                    color = Color(0xFF7A8BA0),
-                    letterSpacing = 0.2.sp
+                    color = Color(0xFF7A8BA0)
                 ),
                 textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Glass Card
+            // Card
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color(0x1AFFFFFF),
-                                Color(0x0DFFFFFF)
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                            colors = listOf(Color(0x1AFFFFFF), Color(0x0DFFFFFF))
                         )
                     )
                     .border(
                         width = 1.dp,
                         brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color(0x33FFFFFF),
-                                Color(0x0DFFFFFF)
-                            )
+                            colors = listOf(Color(0x33FFFFFF), Color(0x0DFFFFFF))
                         ),
                         shape = RoundedCornerShape(24.dp)
                     )
@@ -266,15 +258,12 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Full Name Field
+                    // Full Name
                     AuthTextField(
                         value = fullName,
-                        onValueChange = {
-                            fullName = it
-                            nameError = null
-                        },
+                        onValueChange = { fullName = it; nameError = null },
                         label = "Nom complet",
-                        placeholder = "Saisir Votre Nom Complet",
+                        placeholder = "Jean Dupont",
                         leadingIcon = Icons.Default.Person,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
@@ -288,15 +277,12 @@ fun RegisterScreen(
                         errorMessage = nameError
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // Email Field
+                    // Email
                     AuthTextField(
                         value = email,
-                        onValueChange = {
-                            email = it
-                            emailError = null
-                        },
+                        onValueChange = { email = it; emailError = null },
                         label = "Adresse e-mail",
                         placeholder = "vous@exemple.com",
                         leadingIcon = Icons.Default.Email,
@@ -311,15 +297,12 @@ fun RegisterScreen(
                         errorMessage = emailError
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // Password Field
+                    // Password
                     AuthTextField(
                         value = password,
-                        onValueChange = {
-                            password = it
-                            passwordError = null
-                        },
+                        onValueChange = { password = it; passwordError = null },
                         label = "Mot de passe",
                         placeholder = "Minimum 6 caractères",
                         leadingIcon = Icons.Default.Lock,
@@ -339,23 +322,19 @@ fun RegisterScreen(
                                 Icon(
                                     imageVector = if (passwordVisible)
                                         Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (passwordVisible)
-                                        "Masquer" else "Afficher",
+                                    contentDescription = null,
                                     tint = Color(0xFF7A8BA0)
                                 )
                             }
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // Confirm Password Field
+                    // Confirm Password
                     AuthTextField(
                         value = confirmPassword,
-                        onValueChange = {
-                            confirmPassword = it
-                            confirmPasswordError = null
-                        },
+                        onValueChange = { confirmPassword = it; confirmPasswordError = null },
                         label = "Confirmer le mot de passe",
                         placeholder = "Répétez le mot de passe",
                         leadingIcon = Icons.Default.Lock,
@@ -365,9 +344,7 @@ fun RegisterScreen(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
-                        keyboardActions = KeyboardActions(
-                            onDone = { handleRegister() }
-                        ),
+                        keyboardActions = KeyboardActions(onDone = { handleRegister() }),
                         isError = confirmPasswordError != null,
                         errorMessage = confirmPasswordError,
                         trailingIcon = {
@@ -375,52 +352,45 @@ fun RegisterScreen(
                                 Icon(
                                     imageVector = if (confirmPasswordVisible)
                                         Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (confirmPasswordVisible)
-                                        "Masquer" else "Afficher",
+                                    contentDescription = null,
                                     tint = Color(0xFF7A8BA0)
                                 )
                             }
                         }
                     )
 
-                    // Success message
+                    // Error message
                     AnimatedVisibility(
-                        visible = successMessage != null,
+                        visible = uiState.errorMessage != null,
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically()
                     ) {
-                        successMessage?.let {
-                            Spacer(modifier = Modifier.height(16.dp))
+                        uiState.errorMessage?.let { err ->
+                            Spacer(modifier = Modifier.height(14.dp))
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0x1A00D4AA))
-                                    .border(
-                                        1.dp,
-                                        Color(0x3300D4AA),
-                                        RoundedCornerShape(12.dp)
-                                    )
+                                    .background(Color(0x1AFF4D6D))
+                                    .border(1.dp, Color(0x33FF4D6D), RoundedCornerShape(12.dp))
                                     .padding(12.dp)
                             ) {
                                 Text(
-                                    text = it,
+                                    text = err,
                                     style = TextStyle(
                                         fontSize = 13.sp,
-                                        color = Color(0xFF00D4AA),
-                                        fontWeight = FontWeight.Medium
+                                        color = Color(0xFFFF7A93)
                                     )
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    // Register Button
                     GradientButton(
                         text = "Créer mon compte",
-                        isLoading = isLoading,
+                        isLoading = uiState.isLoading,
                         onClick = { handleRegister() },
                         gradientColors = listOf(Color(0xFF00D4AA), Color(0xFF00C2FF))
                     )
@@ -433,12 +403,15 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Divider(modifier = Modifier.weight(1f), color = Color(0xFF1E2D40))
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF1E2D40))
                 Text(
                     text = "  ou  ",
-                    style = TextStyle(fontSize = 12.sp, color = Color(0xFF4A5C6A))
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        color = Color(0xFF4A5C6A)
+                    )
                 )
-                Divider(modifier = Modifier.weight(1f), color = Color(0xFF1E2D40))
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF1E2D40))
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -449,7 +422,10 @@ fun RegisterScreen(
             ) {
                 Text(
                     text = "Vous avez déjà un compte ? ",
-                    style = TextStyle(fontSize = 14.sp, color = Color(0xFF7A8BA0))
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        color = Color(0xFF7A8BA0)
+                    )
                 )
                 Text(
                     text = "Se connecter",

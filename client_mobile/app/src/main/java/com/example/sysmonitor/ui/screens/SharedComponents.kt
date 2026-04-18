@@ -1,24 +1,49 @@
 package com.example.sysmonitor.ui.screens
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.*
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 // ─────────────────────────────────────────
 // AUTH TEXT FIELD
@@ -41,6 +66,7 @@ fun AuthTextField(
     trailingIcon: (@Composable () -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
+
         Text(
             text = label,
             style = TextStyle(
@@ -131,16 +157,13 @@ fun GradientButton(
     isLoading: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    gradientColors: List<Color> = listOf(
-        Color(0xFF00C2FF),
-        Color(0xFF6E40FF)
-    )
+    gradientColors: List<Color> = listOf(Color(0xFF00C2FF), Color(0xFF6E40FF))
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val scale by animateFloatAsState(
         targetValue = if (isLoading) 0.97f else 1f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "buttonScale"
+        label = "scale"
     )
 
     Box(
@@ -150,16 +173,10 @@ fun GradientButton(
             .height(52.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(
-                brush = if (!isLoading) {
+                brush = if (!isLoading)
                     Brush.linearGradient(colors = gradientColors)
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF1E3A5F),
-                            Color(0xFF1E3A5F)
-                        )
-                    )
-                }
+                else
+                    Brush.linearGradient(colors = listOf(Color(0xFF1E3A5F), Color(0xFF1E3A5F)))
             )
             .clickable(
                 interactionSource = interactionSource,

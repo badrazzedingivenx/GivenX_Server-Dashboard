@@ -7,102 +7,50 @@ import kotlinx.coroutines.delay
 
 class ServerRepositoryImpl : ServerRepository {
 
-    // Fake data — replace with real API later
+    // ✅ MOCK list — replace with api.getServers() when backend is ready
     private val fakeServers = mutableListOf(
-        ServerModel(
-            id          = "1",
-            name        = "Serveur Principal",
-            ipAddress   = "192.168.1.1",
-            status      = ServerStatus.ONLINE,
-            cpuUsage    = 45.5f,
-            ramUsage    = 62.3f,
-            os          = "Ubuntu 22.04",
-            location    = "Paris, FR",
-            uptimeHours = 720
-        ),
-        ServerModel(
-            id          = "2",
-            name        = "Serveur de Backup",
-            ipAddress   = "192.168.1.2",
-            status      = ServerStatus.ONLINE,
-            cpuUsage    = 12.1f,
-            ramUsage    = 30.0f,
-            os          = "Debian 11",
-            location    = "Lyon, FR",
-            uptimeHours = 480
-        ),
-        ServerModel(
-            id          = "3",
-            name        = "Serveur de Test",
-            ipAddress   = "192.168.1.3",
-            status      = ServerStatus.STOPPED,
-            cpuUsage    = 0f,
-            ramUsage    = 0f,
-            os          = "CentOS 8",
-            location    = "Marseille, FR",
-            uptimeHours = 0
-        )
+        ServerModel("1", "Serveur Principal", "192.168.1.1",  ServerStatus.ONLINE,     45.5f, 62.3f, "Ubuntu 22.04", "Paris, FR",     720),
+        ServerModel("2", "Serveur de Backup", "192.168.1.2",  ServerStatus.ONLINE,     12.1f, 30.0f, "Debian 11",    "Lyon, FR",      480),
+        ServerModel("3", "Serveur de Test",   "192.168.1.3",  ServerStatus.STOPPED,    0f,    0f,    "CentOS 8",     "Marseille, FR", 0),
+        ServerModel("4", "Serveur Prod",      "10.0.0.1",     ServerStatus.ONLINE,     78.2f, 85.0f, "Ubuntu 20.04", "Paris, FR",     1440),
+        ServerModel("5", "Serveur Staging",   "10.0.0.2",     ServerStatus.RESTARTING, 5.0f,  20.0f, "Debian 11",    "Bordeaux, FR",  96),
     )
 
     override suspend fun getServers(): Result<List<ServerModel>> {
-        delay(1000)
+        delay(800)
         return Result.success(fakeServers.toList())
     }
 
     override suspend fun getServerById(id: String): Result<ServerModel> {
-        delay(800)
-        val server = fakeServers.find { it.id == id }
-        return if (server != null) {
-            Result.success(server)
-        } else {
-            Result.failure(Exception("Serveur introuvable"))
-        }
+        delay(500)
+        return fakeServers.find { it.id == id }
+            ?.let { Result.success(it) }
+            ?: Result.failure(Exception("Serveur introuvable"))
     }
 
-    override suspend fun createServer(
-        request: CreateServerRequest
-    ): Result<ServerModel> {
-        delay(1200)
-        val newServer = ServerModel(
-            id          = (fakeServers.size + 1).toString(),
-            name        = request.name,
-            ipAddress   = request.ipAddress,
-            status      = ServerStatus.ONLINE,
-            cpuUsage    = 0f,
-            ramUsage    = 0f,
-            os          = request.os,
-            location    = request.location,
-            uptimeHours = 0
+    override suspend fun createServer(request: CreateServerRequest): Result<ServerModel> {
+        delay(1000)
+        val new = ServerModel(
+            id = (fakeServers.size + 1).toString(),
+            name = request.name, ipAddress = request.ipAddress,
+            status = ServerStatus.ONLINE, cpuUsage = 0f, ramUsage = 0f,
+            os = request.os, location = request.location, uptimeHours = 0
         )
-        fakeServers.add(newServer)
-        return Result.success(newServer)
+        fakeServers.add(new)
+        return Result.success(new)
     }
 
     override suspend fun restartServer(id: String): Result<Boolean> {
-        delay(1500)
-        val index = fakeServers.indexOfFirst { it.id == id }
-        return if (index != -1) {
-            fakeServers[index] = fakeServers[index].copy(
-                status = ServerStatus.RESTARTING
-            )
-            Result.success(true)
-        } else {
-            Result.failure(Exception("Serveur introuvable"))
-        }
+        delay(1000)
+        val i = fakeServers.indexOfFirst { it.id == id }
+        if (i != -1) fakeServers[i] = fakeServers[i].copy(status = ServerStatus.RESTARTING)
+        return Result.success(true)
     }
 
     override suspend fun stopServer(id: String): Result<Boolean> {
-        delay(1500)
-        val index = fakeServers.indexOfFirst { it.id == id }
-        return if (index != -1) {
-            fakeServers[index] = fakeServers[index].copy(
-                status   = ServerStatus.STOPPED,
-                cpuUsage = 0f,
-                ramUsage = 0f
-            )
-            Result.success(true)
-        } else {
-            Result.failure(Exception("Serveur introuvable"))
-        }
+        delay(1000)
+        val i = fakeServers.indexOfFirst { it.id == id }
+        if (i != -1) fakeServers[i] = fakeServers[i].copy(status = ServerStatus.STOPPED, cpuUsage = 0f, ramUsage = 0f)
+        return Result.success(true)
     }
 }
