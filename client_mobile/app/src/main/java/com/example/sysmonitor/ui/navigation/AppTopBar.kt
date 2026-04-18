@@ -1,10 +1,14 @@
 package com.example.sysmonitor.ui.navigation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -12,11 +16,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.ExitToApp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +38,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+// ─────────────────────────────────────────
+// ROUTE → TITLE
+// ─────────────────────────────────────────
 
 fun routeToTitle(route: String?): String = when (route) {
     Routes.DASHBOARD       -> "Tableau de bord"
@@ -37,19 +54,36 @@ fun routeToTitle(route: String?): String = when (route) {
     else                   -> "SysMonitor"
 }
 
+// ─────────────────────────────────────────
+// TOP BAR
+// ─────────────────────────────────────────
+
 @Composable
 fun AppTopBar(
     currentRoute: String?,
     onMenuClick: () -> Unit,
     onLogout: () -> Unit
 ) {
+    // ✅ Dialog state lives here — no prop drilling needed
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // Confirmation dialog
+    if (showLogoutDialog) {
+        LogoutConfirmDialog(
+            onConfirm = {
+                showLogoutDialog = false
+                onLogout()
+            },
+            onDismiss = {
+                showLogoutDialog = false
+            }
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            // ✅ FIX — navy background matching the app, not black
             .background(Color(0xFF0A0E1A))
-            // ✅ FIX — statusBarsPadding pushes content below status bar icons
-            // This is correct here because contentWindowInsets = 0 in Scaffold
             .statusBarsPadding()
     ) {
         Row(
@@ -59,7 +93,7 @@ fun AppTopBar(
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // ── Menu icon
+            // Menu button
             IconButton(onClick = onMenuClick) {
                 Icon(
                     imageVector        = Icons.Default.Menu,
@@ -69,7 +103,7 @@ fun AppTopBar(
                 )
             }
 
-            // ── Dynamic title
+            // Dynamic title
             Text(
                 text  = routeToTitle(currentRoute),
                 style = TextStyle(
@@ -80,7 +114,7 @@ fun AppTopBar(
                 )
             )
 
-            // ── Logout button
+            // Logout button — opens dialog, does NOT call onLogout directly
             Box(
                 modifier = Modifier
                     .padding(end = 4.dp)
@@ -88,7 +122,7 @@ fun AppTopBar(
                     .background(Color(0x1AFF4D6D))
             ) {
                 IconButton(
-                    onClick  = onLogout,
+                    onClick  = { showLogoutDialog = true },
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
@@ -101,11 +135,121 @@ fun AppTopBar(
             }
         }
 
-        // Bottom separator line
         HorizontalDivider(
             modifier  = Modifier.align(Alignment.BottomCenter),
             color     = Color(0x22FFFFFF),
             thickness = 0.5.dp
         )
     }
+}
+
+// ─────────────────────────────────────────
+// LOGOUT CONFIRMATION DIALOG
+// ─────────────────────────────────────────
+
+@Composable
+private fun LogoutConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+
+        // ── Dialog container styling
+        containerColor = Color(0xFF0D1B2A),
+        shape          = RoundedCornerShape(20.dp),
+
+        // ── Icon
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0x1AFF4D6D))
+                    .border(1.dp, Color(0x33FF4D6D), RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector        = Icons.Outlined.ExitToApp,
+                    contentDescription = null,
+                    tint               = Color(0xFFFF7A93),
+                    modifier           = Modifier.size(26.dp)
+                )
+            }
+        },
+
+        // ── Title
+        title = {
+            Text(
+                text  = "Déconnexion",
+                style = TextStyle(
+                    fontSize   = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color      = Color.White
+                )
+            )
+        },
+
+        // ── Message
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text  = "Êtes-vous sûr de vouloir vous déconnecter ?",
+                    style = TextStyle(
+                        fontSize   = 14.sp,
+                        color      = Color(0xFF9AAFC2),
+                        lineHeight = 20.sp
+                    )
+                )
+                Text(
+                    text  = "Vous devrez vous reconnecter pour accéder à l'application.",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        color    = Color(0xFF4A5C6A)
+                    )
+                )
+            }
+        },
+
+        // ── Confirm button
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                shape   = RoundedCornerShape(12.dp),
+                colors  = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF4D6D),
+                    contentColor   = Color.White
+                )
+            ) {
+                Icon(
+                    imageVector        = Icons.Default.Logout,
+                    contentDescription = null,
+                    modifier           = Modifier.size(15.dp)
+                )
+                Spacer(modifier = Modifier.size(6.dp))
+                Text(
+                    text  = "Déconnecter",
+                    style = TextStyle(
+                        fontSize   = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color      = Color.White
+                    )
+                )
+            }
+        },
+
+        // ── Dismiss button
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text  = "Annuler",
+                    style = TextStyle(
+                        fontSize   = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color      = Color(0xFF7A8BA0)
+                    )
+                )
+            }
+        }
+    )
 }

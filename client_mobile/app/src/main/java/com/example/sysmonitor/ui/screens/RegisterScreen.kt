@@ -263,7 +263,7 @@ fun RegisterScreen(
                         value = fullName,
                         onValueChange = { fullName = it; nameError = null },
                         label = "Nom complet",
-                        placeholder = "Jean Dupont",
+                        placeholder = "Saisir votre nom complet",
                         leadingIcon = Icons.Default.Person,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
