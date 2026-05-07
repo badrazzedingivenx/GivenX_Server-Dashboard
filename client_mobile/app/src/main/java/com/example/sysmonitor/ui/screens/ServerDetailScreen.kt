@@ -37,6 +37,7 @@ fun ServerDetailScreen(
         viewModel.loadServerDetail(serverId)
     }
 
+
     LaunchedEffect(uiState.actionSuccess) {
         uiState.actionSuccess?.let {
             snackbarHostState.showSnackbar(it)
@@ -118,12 +119,13 @@ fun ServerDetailScreen(
                     )
                 }
                 uiState.server != null -> {
-                    ServerDetailContent(
-                        server = uiState.server!!,
-                        actionLoading = uiState.actionLoading,
-                        onBack = onNavigateBack,
-                        onRestart = { showRestartDialog = true },
-                        onStop = { showStopDialog = true }
+                    data class ServerDetailUiState(
+                        val isLoading: Boolean     = false,
+                        val server: ServerModel?   = null,
+                        val errorMessage: String?  = null,
+                        val actionLoading: Boolean = false,
+                        val actionSuccess: String? = null,
+                        val actionError: String?   = null
                     )
                 }
             }

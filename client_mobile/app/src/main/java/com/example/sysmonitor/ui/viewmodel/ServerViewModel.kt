@@ -1,11 +1,13 @@
 package com.example.sysmonitor.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sysmonitor.data.model.CreateServerRequest
 import com.example.sysmonitor.data.model.ServerModel
-import com.example.sysmonitor.data.repository.ServerRepository
 import com.example.sysmonitor.data.repository.ServerRepositoryImpl
+import com.example.sysmonitor.data.repository.TokenManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,222 +15,165 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────
-// UI STATES
+// LIST STATE
 // ─────────────────────────────────────────
 
 data class ServerListUiState(
-    val isLoading: Boolean = true,
-    val isRefreshing: Boolean = false,
+    val isLoading: Boolean         = false,
     val servers: List<ServerModel> = emptyList(),
+    val errorMessage: String?      = null
+)
+
+// ─────────────────────────────────────────
+// CREATE STATE
+// ─────────────────────────────────────────
+
+data class ServerCreateUiState(
+    val isLoading: Boolean    = false,
+    val isSuccess: Boolean    = false,   // ✅ isSuccess (not "success")
     val errorMessage: String? = null
 )
+
+// ─────────────────────────────────────────
+// DETAIL STATE  ← NEW
+// ─────────────────────────────────────────
 
 data class ServerDetailUiState(
-    val isLoading: Boolean = true,
-    val server: ServerModel? = null,
+    val isLoading: Boolean    = false,
+    val server: ServerModel?  = null,
     val errorMessage: String? = null,
-    val actionSuccess: String? = null,
-    val actionLoading: Boolean = false
-)
-
-data class CreateServerUiState(
-    val isLoading: Boolean = false,
-    val success: Boolean = false,
-    val errorMessage: String? = null
+    val actionSuccess: String? = null,  // e.g. "Serveur redémarré"
+    val actionError: String?  = null
 )
 
 // ─────────────────────────────────────────
 // VIEWMODEL
 // ─────────────────────────────────────────
 
-class ServerViewModel(
-    private val repository: ServerRepository = ServerRepositoryImpl()
-) : ViewModel() {
+class ServerViewModel(application: Application) : AndroidViewModel(application) {
 
-    // List state
-    private val _listState = MutableStateFlow(ServerListUiState())
-    val listState: StateFlow<ServerListUiState> = _listState.asStateFlow()
+    private val _listState   = MutableStateFlow(ServerListUiState())
+    val listState: StateFlow<ServerListUiState>   = _listState.asStateFlow()
 
-    // Detail state
+    private val _createState = MutableStateFlow(ServerCreateUiState())
+    val createState: StateFlow<ServerCreateUiState> = _createState.asStateFlow()
+
+    // ✅ NEW — detail state for ServerDetailScreen
     private val _detailState = MutableStateFlow(ServerDetailUiState())
     val detailState: StateFlow<ServerDetailUiState> = _detailState.asStateFlow()
 
-    // Create state
-    private val _createState = MutableStateFlow(CreateServerUiState())
-    val createState: StateFlow<CreateServerUiState> = _createState.asStateFlow()
-
-    // ── LIST ──────────────────────────────
+    private val repo = ServerRepositoryImpl(TokenManager(application))
 
     init { loadServers() }
 
+    // ─────────────────────────────────────
+    // LIST
+    // ─────────────────────────────────────
+
     fun loadServers() {
         viewModelScope.launch {
-            _listState.update {
-                it.copy(isLoading = true, errorMessage = null)
-            }
-            repository.getServers().fold(
-                onSuccess = { servers ->
-                    _listState.update {
-                        it.copy(
-                            isLoading    = false,
-                            isRefreshing = false,
-                            servers      = servers,
-                            errorMessage = null
-                        )
-                    }
+            _listState.update { it.copy(isLoading = true, errorMessage = null) }
+            repo.getServers().fold(
+                onSuccess = { list ->
+                    _listState.update { it.copy(isLoading = false, servers = list) }
                 },
-                onFailure = { error ->
-                    _listState.update {
-                        it.copy(
-                            isLoading    = false,
-                            isRefreshing = false,
-                            errorMessage = error.message
-                        )
-                    }
+                onFailure = { err ->
+                    _listState.update { it.copy(isLoading = false, errorMessage = err.message) }
                 }
             )
         }
     }
 
-    fun refreshServers() {
+    fun deleteServer(id: String) {
         viewModelScope.launch {
-            _listState.update { it.copy(isRefreshing = true) }
-            repository.getServers().fold(
-                onSuccess = { servers ->
-                    _listState.update {
-                        it.copy(
-                            isRefreshing = false,
-                            servers      = servers,
-                            errorMessage = null
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    _listState.update {
-                        it.copy(
-                            isRefreshing = false,
-                            errorMessage = error.message
-                        )
-                    }
+            repo.deleteServer(id).fold(
+                onSuccess = { loadServers() },
+                onFailure = { err ->
+                    _listState.update { it.copy(errorMessage = err.message) }
                 }
             )
         }
     }
 
-    // ── DETAIL ────────────────────────────
+    // ─────────────────────────────────────
+    // CREATE — accepts separate params  ✅
+    // ─────────────────────────────────────
 
-    fun loadServerDetail(id: String) {
+    fun createServer(
+        name: String,
+        ipAddress: String,
+        os: String = "",
+        location: String = ""
+    ) {
         viewModelScope.launch {
-            _detailState.update {
-                it.copy(isLoading = true, errorMessage = null)
-            }
-            repository.getServerById(id).fold(
-                onSuccess = { server ->
-                    _detailState.update {
-                        it.copy(isLoading = false, server = server)
-                    }
-                },
-                onFailure = { error ->
-                    _detailState.update {
-                        it.copy(
-                            isLoading    = false,
-                            errorMessage = error.message
-                        )
-                    }
-                }
-            )
-        }
-    }
-
-    // ── ACTIONS ───────────────────────────
-
-    fun restartServer(id: String) {
-        viewModelScope.launch {
-            _detailState.update {
-                it.copy(actionLoading = true, actionSuccess = null)
-            }
-            repository.restartServer(id).fold(
+            _createState.update { it.copy(isLoading = true, errorMessage = null) }
+            repo.createServer(CreateServerRequest(name, ipAddress, os, location)).fold(
                 onSuccess = {
-                    _detailState.update {
-                        it.copy(
-                            actionLoading = false,
-                            actionSuccess = "Redémarrage en cours…"
-                        )
-                    }
-                    loadServerDetail(id)
+                    _createState.update { it.copy(isLoading = false, isSuccess = true) }
+                    loadServers()
                 },
-                onFailure = { error ->
-                    _detailState.update {
-                        it.copy(
-                            actionLoading = false,
-                            errorMessage  = error.message
-                        )
-                    }
+                onFailure = { err ->
+                    _createState.update { it.copy(isLoading = false, errorMessage = err.message) }
                 }
             )
         }
     }
 
-    fun stopServer(id: String) {
+    fun resetCreateState() { _createState.update { ServerCreateUiState() } }
+
+    // ─────────────────────────────────────
+    // DETAIL — NEW functions  ✅
+    // ─────────────────────────────────────
+
+    // Load a single server from the already-loaded list
+    fun loadServerDetail(serverId: String) {
         viewModelScope.launch {
-            _detailState.update {
-                it.copy(actionLoading = true, actionSuccess = null)
+            _detailState.update { it.copy(isLoading = true, errorMessage = null) }
+            val server = _listState.value.servers.find { it.id == serverId }
+            if (server != null) {
+                _detailState.update { it.copy(isLoading = false, server = server) }
+            } else {
+                // Fallback: fetch full list then find
+                repo.getServers().fold(
+                    onSuccess = { list ->
+                        val found = list.find { it.id == serverId }
+                        _detailState.update {
+                            it.copy(
+                                isLoading = false,
+                                server    = found,
+                                errorMessage = if (found == null) "Serveur introuvable" else null
+                            )
+                        }
+                    },
+                    onFailure = { err ->
+                        _detailState.update { it.copy(isLoading = false, errorMessage = err.message) }
+                    }
+                )
             }
-            repository.stopServer(id).fold(
-                onSuccess = {
-                    _detailState.update {
-                        it.copy(
-                            actionLoading = false,
-                            actionSuccess = "Serveur arrêté avec succès"
-                        )
-                    }
-                    loadServerDetail(id)
-                },
-                onFailure = { error ->
-                    _detailState.update {
-                        it.copy(
-                            actionLoading = false,
-                            errorMessage  = error.message
-                        )
-                    }
-                }
-            )
+        }
+    }
+
+    fun restartServer(serverId: String) {
+        viewModelScope.launch {
+            _detailState.update { it.copy(actionSuccess = null, actionError = null) }
+            // Mock action — replace with real API call when endpoint is available
+            // e.g. repo.restartServer(serverId)
+            delay(1000)
+            _detailState.update { it.copy(actionSuccess = "Serveur en cours de redémarrage…") }
+        }
+    }
+
+    fun stopServer(serverId: String) {
+        viewModelScope.launch {
+            _detailState.update { it.copy(actionSuccess = null, actionError = null) }
+            // Mock action — replace with real API call when endpoint is available
+            // e.g. repo.stopServer(serverId)
+            delay(1000)
+            _detailState.update { it.copy(actionSuccess = "Serveur arrêté") }
         }
     }
 
     fun clearDetailMessages() {
-        _detailState.update {
-            it.copy(actionSuccess = null, errorMessage = null)
-        }
-    }
-
-    // ── CREATE ────────────────────────────
-
-    fun createServer(request: CreateServerRequest) {
-        viewModelScope.launch {
-            _createState.update {
-                it.copy(isLoading = true, errorMessage = null)
-            }
-            repository.createServer(request).fold(
-                onSuccess = {
-                    _createState.update {
-                        it.copy(isLoading = false, success = true)
-                    }
-                    loadServers()
-                },
-                onFailure = { error ->
-                    _createState.update {
-                        it.copy(
-                            isLoading    = false,
-                            errorMessage = error.message
-                        )
-                    }
-                }
-            )
-        }
-    }
-
-    fun resetCreateState() {
-        _createState.update { CreateServerUiState() }
+        _detailState.update { it.copy(actionSuccess = null, actionError = null) }
     }
 }

@@ -11,36 +11,27 @@ class AuthRepositoryImpl : AuthRepository {
 
     private val api = RetrofitClient.apiService
 
-    override suspend fun login(
-        email: String,
-        password: String
-    ): Result<LoginResponse> {
-        return try {
-            val response = api.login(LoginRequest(email, password))
+    override suspend fun login(email: String, password: String): Result<LoginResponse> {
+        val result = safeApiCall { api.login(LoginRequest(email, password)) }
 
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) {
-                    Result.success(body)
-                } else {
-                    Result.failure(Exception("Réponse vide du serveur"))
+        return result.fold(
+            onSuccess = { response ->
+                when {
+                    // ✅ Token found — success
+                    response.resolvedToken != null ->
+                        Result.success(response)
+
+                    // ❌ 200 OK but no token in body — log the response to debug
+                    else ->
+                        Result.failure(Exception(
+                            "Connexion réussie mais token absent. " +
+                                    "Vérifiez le format de réponse de votre API dans Logcat (tag: OkHttp)"
+                        ))
                 }
-            } else {
-                val error = when (response.code()) {
-                    401  -> "Email ou mot de passe incorrect"
-                    403  -> "Accès refusé"
-                    404  -> "Service introuvable"
-                    422  -> "Données invalides"
-                    500  -> "Erreur serveur, réessayez plus tard"
-                    else -> "Erreur ${response.code()}"
-                }
-                Result.failure(Exception(error))
+            },
+            onFailure = { error ->
+                Result.failure(error)
             }
-
-        } catch (e: Exception) {
-            Result.failure(
-                Exception("Connexion impossible. Vérifiez votre réseau.")
-            )
-        }
+        )
     }
 }

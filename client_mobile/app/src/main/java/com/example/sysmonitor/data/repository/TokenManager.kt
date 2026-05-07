@@ -1,28 +1,20 @@
 package com.example.sysmonitor.data.repository
 
 import android.content.Context
-import android.content.SharedPreferences
 
 class TokenManager(context: Context) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(
-        "sysmonitor_prefs",
-        Context.MODE_PRIVATE
-    )
+    private val prefs = context.getSharedPreferences("sysmonitor_prefs", Context.MODE_PRIVATE)
 
-    fun saveToken(token: String) {
-        prefs.edit().putString("auth_token", token).apply()
-    }
+    fun saveToken(token: String) = prefs.edit().putString(KEY_TOKEN, token).apply()
+    fun getToken(): String? = prefs.getString(KEY_TOKEN, null)
+    fun clearToken() = prefs.edit().remove(KEY_TOKEN).apply()
+    fun isLoggedIn(): Boolean = getToken() != null
 
-    fun getToken(): String? {
-        return prefs.getString("auth_token", null)
-    }
+    // Returns "Bearer <token>" ready for Authorization header
+    fun bearerToken(): String = "Bearer ${getToken().orEmpty()}"
 
-    fun clearToken() {
-        prefs.edit().remove("auth_token").apply()
-    }
-
-    fun isLoggedIn(): Boolean {
-        return getToken() != null
+    companion object {
+        private const val KEY_TOKEN = "auth_token"
     }
 }

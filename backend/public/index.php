@@ -54,15 +54,19 @@ loadEnvFile(__DIR__ . '/../.env');
 
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../storage/logs/php_errors.log');
 error_reporting(E_ALL);
+
+$logDir = __DIR__ . '/../storage/logs';
+if (!is_dir($logDir)) {
+    @mkdir($logDir, 0755, true);
+}
+ini_set('error_log', $logDir . '/php_errors.log');
 
 header("Content-Type: application/json; charset=UTF-8");
 
-$allowedOrigins = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-];
+$defaultOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+$envOrigins     = array_filter(array_map('trim', explode(',', $_ENV['APP_CORS_ORIGINS'] ?? '')));
+$allowedOrigins = array_unique(array_merge($defaultOrigins, $envOrigins));
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 

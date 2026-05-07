@@ -1,0 +1,8 @@
+[variables]
+PHP_VERSION = "8.2"
+
+[phases.install]
+cmds = ["composer install --no-dev --optimize-autoloader --no-interaction"]
+
+[start]
+cmd = "php -S 0.0.0.0:$PORT -t public public/index.php"

@@ -1,0 +1,20 @@
+# Environment
+.env
+
+# Dependencies
+vendor/
+
+# Logs
+storage/logs/*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Debug/test scripts
+debug_env.php
+test_email.php

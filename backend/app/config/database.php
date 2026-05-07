@@ -18,10 +18,10 @@ La classe Database utilise ce fichier pour construire la connexion PDO vers MySQ
 */
 
 return [
-    'host' => $_ENV['DB_HOST'] ?? 'localhost',
-    'port' => $_ENV['DB_PORT'] ?? '3306',
-    'database' => $_ENV['DB_DATABASE'] ?? 'monitoring_saas',
-    'username' => $_ENV['DB_USERNAME'] ?? 'root',
-    'password' => $_ENV['DB_PASSWORD'] ?? '',
-    'charset' => 'utf8mb4',
+    'host'     => $_ENV['DB_HOST']     ?? $_ENV['MYSQLHOST']     ?? 'localhost',
+    'port'     => $_ENV['DB_PORT']     ?? $_ENV['MYSQLPORT']     ?? '3306',
+    'database' => $_ENV['DB_DATABASE'] ?? $_ENV['MYSQLDATABASE'] ?? 'monitoring_saas',
+    'username' => $_ENV['DB_USERNAME'] ?? $_ENV['MYSQLUSER']     ?? 'root',
+    'password' => $_ENV['DB_PASSWORD'] ?? $_ENV['MYSQLPASSWORD'] ?? '',
+    'charset'  => 'utf8mb4',
 ];

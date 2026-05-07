@@ -56,8 +56,8 @@ fun ServerListScreen(
             )
     ) {
         PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = { viewModel.refreshServers() },
+            isRefreshing = uiState.isLoading,
+            onRefresh    = { viewModel.loadServers() },
             state = pullRefreshState,
             modifier = Modifier.fillMaxSize()
         ) {
@@ -285,13 +285,16 @@ fun ServerCard(
 // SHARED SMALL COMPONENTS
 // ─────────────────────────────────────────
 
+// ✅ COPY-PASTE THIS COMPLETE FUNCTION — replaces your ServerStatusBadge
+
 @Composable
 fun ServerStatusBadge(status: ServerStatus) {
+    // ✅ FIX — destructure BOTH color AND label from the Pair
     val (color, label) = when (status) {
-        ServerStatus.ONLINE     -> Color(0xFF00D4AA) to "En ligne"
-        ServerStatus.OFFLINE    -> Color(0xFFFF4D6D) to "Hors ligne"
-        ServerStatus.RESTARTING -> Color(0xFFFFA500) to "Redémarrage"
-        ServerStatus.STOPPED    -> Color(0xFF7A8BA0) to "Arrêté"
+        ServerStatus.ONLINE     -> Pair(Color(0xFF00D4AA), "En ligne")
+        ServerStatus.STOPPED    -> Pair(Color(0xFFFF4D6D), "Arrêté")
+        ServerStatus.RESTARTING -> Pair(Color(0xFFFFA500), "Redémarrage")
+        ServerStatus.UNKNOWN    -> Pair(Color(0xFF7A8BA0), "Inconnu")
     }
     Box(
         modifier = Modifier
@@ -301,11 +304,11 @@ fun ServerStatusBadge(status: ServerStatus) {
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(
-            text = label,
+            text  = label,
             style = TextStyle(
-                fontSize = 11.sp,
+                fontSize   = 11.sp,
                 fontWeight = FontWeight.Medium,
-                color = color
+                color      = color
             )
         )
     }

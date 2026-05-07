@@ -41,8 +41,8 @@ fun ServerCreateScreen(
     var osError     by remember { mutableStateOf<String?>(null) }
 
     // Navigate back on success
-    LaunchedEffect(uiState.success) {
-        if (uiState.success) {
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
             viewModel.resetCreateState()
             onCreatedSuccess()
         }
@@ -230,12 +230,10 @@ fun ServerCreateScreen(
                         onClick = {
                             if (validate()) {
                                 viewModel.createServer(
-                                    CreateServerRequest(
-                                        name      = name,
-                                        ipAddress = ipAddress,
-                                        os        = os,
-                                        location  = location
-                                    )
+                                    name      = name,
+                                    ipAddress = ipAddress,
+                                    os        = os,
+                                    location  = location
                                 )
                             }
                         }

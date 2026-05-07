@@ -17,7 +17,7 @@ Les autres fichiers pourront lire cette configuration pour éviter de répéter 
 
 return [
     'app_name' => 'Monitoring SaaS',
-    'env' => 'development',
-    'base_url' => 'http://localhost:8000',
+    'env'      => $_ENV['APP_ENV']      ?? 'development',
+    'base_url' => $_ENV['APP_BASE_URL'] ?? 'http://localhost:8000',
 ];
 

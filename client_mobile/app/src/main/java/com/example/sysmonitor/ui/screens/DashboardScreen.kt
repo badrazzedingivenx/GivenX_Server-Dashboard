@@ -1,45 +1,86 @@
 package com.example.sysmonitor.ui.screens
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sysmonitor.data.model.MetricsModel
-import com.example.sysmonitor.ui.viewmodel.DashboardUiState
 import com.example.sysmonitor.ui.viewmodel.DashboardViewModel
 
-// ─────────────────────────────────────────
-// DASHBOARD SCREEN
-// ─────────────────────────────────────────
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(
-    viewModel: DashboardViewModel = viewModel()
-) {
+fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val pullRefreshState = rememberPullToRefreshState()
+    val pullRefreshState  = rememberPullToRefreshState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.errorMessage) {
@@ -53,61 +94,48 @@ fun DashboardScreen(
         }
     }
 
-    Scaffold(
-        // ✅ Fix 1 — remove system bar insets from Scaffold
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState) { data ->
-                Snackbar(
-                    snackbarData   = data,
-                    containerColor = Color(0xFF1E2D40),
-                    contentColor   = Color(0xFFCDD9E5),
-                    actionColor    = Color(0xFF00C2FF),
-                    shape          = RoundedCornerShape(12.dp)
-                )
-            }
-        },
-        containerColor = Color.Transparent
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier  = Modifier.align(Alignment.BottomCenter)
+        ) { data ->
+            Snackbar(
+                snackbarData   = data,
+                containerColor = Color(0xFF1E2D40),
+                contentColor   = Color(0xFFCDD9E5),
+                actionColor    = Color(0xFF00C2FF),
+                shape          = RoundedCornerShape(12.dp)
+            )
+        }
 
         PullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh    = { viewModel.refresh() },
             state        = pullRefreshState,
-            modifier     = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier     = Modifier.fillMaxSize()
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF0A0E1A),
-                                Color(0xFF0D1B2A),
-                                Color(0xFF0A1628)
-                            )
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF0A0E1A), Color(0xFF0D1B2A), Color(0xFF0A1628))
                         )
                     )
             ) {
-                // Ambient orbs
-                Canvas(modifier = Modifier.fillMaxSize()) {
+                Canvas(Modifier.fillMaxSize()) {
                     drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color(0x1500C2FF), Color.Transparent),
-                            center = Offset(size.width * 0.1f, size.height * 0.1f),
-                            radius = size.width * 0.5f
-                        ),
+                        brush  = Brush.radialGradient(
+                            listOf(Color(0x1500C2FF), Color.Transparent),
+                            Offset(size.width * 0.1f, size.height * 0.1f), size.width * 0.5f),
                         center = Offset(size.width * 0.1f, size.height * 0.1f),
                         radius = size.width * 0.5f
                     )
                     drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color(0x126E40FF), Color.Transparent),
-                            center = Offset(size.width * 0.9f, size.height * 0.6f),
-                            radius = size.width * 0.45f
-                        ),
+                        brush  = Brush.radialGradient(
+                            listOf(Color(0x126E40FF), Color.Transparent),
+                            Offset(size.width * 0.9f, size.height * 0.6f), size.width * 0.45f),
                         center = Offset(size.width * 0.9f, size.height * 0.6f),
                         radius = size.width * 0.45f
                     )
@@ -117,18 +145,18 @@ fun DashboardScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        // ✅ Fix 2 — push content below status bar
-                        .statusBarsPadding()
                         .padding(horizontal = 20.dp)
                 ) {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
                     DashboardHeader()
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(Modifier.height(28.dp))
                     SystemStatusBadge(
                         isLoading = uiState.isLoading,
                         hasError  = uiState.metrics == null && !uiState.isLoading
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(Modifier.height(24.dp))
+
+                    // ✅ named style= parameter
                     Text(
                         text  = "Métriques système",
                         style = TextStyle(
@@ -138,15 +166,19 @@ fun DashboardScreen(
                             letterSpacing = 0.5.sp
                         )
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(Modifier.height(14.dp))
 
                     when {
-                        uiState.isLoading        -> MetricsShimmerGrid()
-                        uiState.metrics != null  -> MetricsGrid(metrics = uiState.metrics!!)
-                        else                     -> ErrorCard(onRetry = { viewModel.loadMetrics() })
+                        uiState.isLoading -> MetricsShimmerGrid()
+                        uiState.metrics != null -> {
+                            // ✅ local val avoids smart cast error on delegated property
+                            val metrics = uiState.metrics!!
+                            MetricsGrid(metrics = metrics)
+                        }
+                        else -> ErrorCard(onRetry = { viewModel.loadMetrics() })
                     }
 
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(Modifier.height(28.dp))
 
                     if (!uiState.isLoading && uiState.metrics != null) {
                         Text(
@@ -158,11 +190,11 @@ fun DashboardScreen(
                                 letterSpacing = 0.5.sp
                             )
                         )
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(Modifier.height(14.dp))
                         ActivityPlaceholderCard()
                     }
 
-                    Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(Modifier.height(40.dp))
                 }
             }
         }
@@ -181,6 +213,7 @@ private fun DashboardHeader() {
         verticalAlignment     = Alignment.CenterVertically
     ) {
         Column {
+            // ✅ style= named, all params named inside TextStyle
             Text(
                 text  = "Tableau de bord",
                 style = TextStyle(
@@ -190,7 +223,7 @@ private fun DashboardHeader() {
                     letterSpacing = (-0.5).sp
                 )
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
                 text  = "Vue d'ensemble du système",
                 style = TextStyle(
@@ -199,7 +232,6 @@ private fun DashboardHeader() {
                 )
             )
         }
-
         Box(
             modifier = Modifier
                 .size(44.dp)
@@ -210,7 +242,7 @@ private fun DashboardHeader() {
         ) {
             Icon(
                 imageVector        = Icons.Outlined.Notifications,
-                contentDescription = "Notifications",
+                contentDescription = null,
                 tint               = Color(0xFF7A8BA0),
                 modifier           = Modifier.size(22.dp)
             )
@@ -219,7 +251,7 @@ private fun DashboardHeader() {
 }
 
 // ─────────────────────────────────────────
-// SYSTEM STATUS BADGE
+// STATUS BADGE
 // ─────────────────────────────────────────
 
 @Composable
@@ -229,18 +261,13 @@ private fun SystemStatusBadge(isLoading: Boolean, hasError: Boolean) {
         hasError  -> Color(0xFFFF4D6D) to "Système non disponible"
         else      -> Color(0xFF00D4AA) to "Système opérationnel"
     }
-
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue  = 0.4f,
         targetValue   = 1f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(900, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseAlpha"
+        animationSpec = infiniteRepeatable(tween(900, easing = EaseInOutSine), RepeatMode.Reverse),
+        label         = "pulseAlpha"
     )
-
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(10.dp))
@@ -270,6 +297,15 @@ private fun SystemStatusBadge(isLoading: Boolean, hasError: Boolean) {
 // ─────────────────────────────────────────
 // METRICS GRID
 // ─────────────────────────────────────────
+
+data class MetricCardData(
+    val title: String,
+    val value: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val accentColor: Color,
+    val progress: Float?
+)
 
 @Composable
 private fun MetricsGrid(metrics: MetricsModel) {
@@ -318,9 +354,7 @@ private fun MetricsGrid(metrics: MetricsModel) {
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                row.forEach { card ->
-                    MetricCard(data = card, modifier = Modifier.weight(1f))
-                }
+                row.forEach { card -> MetricCard(data = card, modifier = Modifier.weight(1f)) }
                 if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
             }
         }
@@ -331,20 +365,8 @@ private fun MetricsGrid(metrics: MetricsModel) {
 // METRIC CARD
 // ─────────────────────────────────────────
 
-data class MetricCardData(
-    val title: String,
-    val value: String,
-    val subtitle: String,
-    val icon: ImageVector,
-    val accentColor: Color,
-    val progress: Float?
-)
-
 @Composable
-private fun MetricCard(
-    data: MetricCardData,
-    modifier: Modifier = Modifier
-) {
+private fun MetricCard(data: MetricCardData, modifier: Modifier = Modifier) {
     var visible by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(
         targetValue   = if (visible) (data.progress ?: 0f) else 0f,
@@ -356,24 +378,17 @@ private fun MetricCard(
         animationSpec = tween(600, easing = EaseOutCubic),
         label         = "alpha"
     )
-
     LaunchedEffect(Unit) { visible = true }
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(Color(0x1AFFFFFF), Color(0x0AFFFFFF)),
-                    start  = Offset(0f, 0f),
-                    end    = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                )
+                Brush.linearGradient(listOf(Color(0x1AFFFFFF), Color(0x0AFFFFFF)))
             )
             .border(
                 1.dp,
-                Brush.linearGradient(
-                    colors = listOf(Color(0x28FFFFFF), Color(0x08FFFFFF))
-                ),
+                Brush.linearGradient(listOf(Color(0x28FFFFFF), Color(0x08FFFFFF))),
                 RoundedCornerShape(20.dp)
             )
             .graphicsLayer { alpha = contentAlpha }
@@ -407,8 +422,9 @@ private fun MetricCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
+            // ✅ ALL Text() calls below use style = TextStyle(...) with named params
             Text(
                 text  = data.value,
                 style = TextStyle(
@@ -418,7 +434,7 @@ private fun MetricCard(
                     letterSpacing = (-1).sp
                 )
             )
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(Modifier.height(2.dp))
             Text(
                 text  = data.title,
                 style = TextStyle(
@@ -429,11 +445,14 @@ private fun MetricCard(
             )
             Text(
                 text  = data.subtitle,
-                style = TextStyle(fontSize = 11.sp, color = Color(0xFF7A8BA0))
+                style = TextStyle(
+                    fontSize = 11.sp,
+                    color    = Color(0xFF7A8BA0)
+                )
             )
 
             if (data.progress != null) {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(Modifier.height(14.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -447,11 +466,8 @@ private fun MetricCard(
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(2.dp))
                             .background(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(
-                                        data.accentColor.copy(alpha = 0.7f),
-                                        data.accentColor
-                                    )
+                                Brush.horizontalGradient(
+                                    listOf(data.accentColor.copy(0.7f), data.accentColor)
                                 )
                             )
                     )
@@ -462,27 +478,23 @@ private fun MetricCard(
 }
 
 // ─────────────────────────────────────────
-// SHIMMER LOADER
+// SHIMMER
 // ─────────────────────────────────────────
 
 @Composable
 private fun MetricsShimmerGrid() {
     val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim by transition.animateFloat(
+    val ta by transition.animateFloat(
         initialValue  = 0f,
         targetValue   = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmerTranslate"
+        animationSpec = infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Restart),
+        label         = "shimmerT"
     )
-    val shimmerBrush = Brush.linearGradient(
+    val brush = Brush.linearGradient(
         colors = listOf(Color(0xFF1A2A3A), Color(0xFF243445), Color(0xFF1A2A3A)),
-        start  = Offset(translateAnim - 300f, 0f),
-        end    = Offset(translateAnim, 0f)
+        start  = Offset(ta - 300f, 0f),
+        end    = Offset(ta, 0f)
     )
-
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         repeat(2) {
             Row(
@@ -490,31 +502,15 @@ private fun MetricsShimmerGrid() {
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 repeat(2) {
-                    ShimmerCard(brush = shimmerBrush, modifier = Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(160.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(brush)
+                    )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ShimmerCard(brush: Brush, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .height(160.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0x1AFFFFFF))
-            .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(20.dp))
-            .padding(18.dp)
-    ) {
-        Column {
-            Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(brush))
-            Spacer(modifier = Modifier.height(16.dp))
-            Box(modifier = Modifier.width(70.dp).height(28.dp).clip(RoundedCornerShape(6.dp)).background(brush))
-            Spacer(modifier = Modifier.height(8.dp))
-            Box(modifier = Modifier.width(90.dp).height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
-            Spacer(modifier = Modifier.weight(1f))
-            Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(brush))
         }
     }
 }
@@ -539,10 +535,7 @@ private fun ErrorCard(onRetry: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(Color(0x1AFF4D6D)),
+                modifier         = Modifier.size(56.dp).clip(CircleShape).background(Color(0x1AFF4D6D)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -561,29 +554,33 @@ private fun ErrorCard(onRetry: () -> Unit) {
                 )
             )
             Text(
-                text      = "Impossible de récupérer les métriques système.\nVérifiez la connexion à l'API.",
-                style     = TextStyle(fontSize = 13.sp, color = Color(0xFF7A8BA0)),
+                text      = "Impossible de récupérer les métriques.\nVérifiez la connexion à l'API.",
+                style     = TextStyle(
+                    fontSize = 13.sp,
+                    color    = Color(0xFF7A8BA0)
+                ),
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(Modifier.height(4.dp))
             Button(
-                onClick         = onRetry,
-                shape           = RoundedCornerShape(12.dp),
-                colors          = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF4D6D),
-                    contentColor   = Color.White
-                ),
-                contentPadding  = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+                onClick        = onRetry,
+                shape          = RoundedCornerShape(12.dp),
+                colors         = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4D6D)),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
             ) {
                 Icon(
                     imageVector        = Icons.Default.Refresh,
                     contentDescription = null,
                     modifier           = Modifier.size(16.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(
                     text  = "Réessayer",
-                    style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    style = TextStyle(
+                        fontSize   = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color      = Color.White
+                    )
                 )
             }
         }
@@ -591,7 +588,7 @@ private fun ErrorCard(onRetry: () -> Unit) {
 }
 
 // ─────────────────────────────────────────
-// ACTIVITY PLACEHOLDER CARD
+// ACTIVITY CARD
 // ─────────────────────────────────────────
 
 @Composable
@@ -600,11 +597,7 @@ private fun ActivityPlaceholderCard() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(Color(0x1AFFFFFF), Color(0x0AFFFFFF))
-                )
-            )
+            .background(Brush.linearGradient(listOf(Color(0x1AFFFFFF), Color(0x0AFFFFFF))))
             .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(20.dp))
             .padding(20.dp)
     ) {
@@ -662,7 +655,10 @@ private fun ActivityPlaceholderCard() {
                                 1    -> "En cours"
                                 else -> "Il y a 15 minutes"
                             },
-                            style = TextStyle(fontSize = 11.sp, color = Color(0xFF4A5C6A))
+                            style = TextStyle(
+                                fontSize = 11.sp,
+                                color    = Color(0xFF4A5C6A)
+                            )
                         )
                     }
                 }
