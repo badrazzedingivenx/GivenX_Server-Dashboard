@@ -1,0 +1,8 @@
+Options -MultiViews -Indexes
+
+RewriteEngine On
+
+# Route everything that is not an existing file/directory to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

@@ -1,0 +1,26 @@
+# Never bake secrets into the image
+.env
+
+# Composer installs inside the container
+vendor/
+
+# Logs are runtime — not build artifacts
+storage/logs/*.log
+
+# Git history not needed in image
+.git/
+.gitignore
+
+# Local/debug files
+debug_env.php
+test_email.php
+
+# Other deployment configs (not needed inside Docker)
+nixpacks.toml
+railway.json
+
+# OS / IDE noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
